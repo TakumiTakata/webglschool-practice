@@ -51,19 +51,20 @@ class ThreeApp {
         color: 0x999999,
     }
 
-    renderer;           // レンダラー
-    scene;              // シーン
-    camera;             // カメラ
-    directionalLight;   // 平行光源
-    ambientLight;       // 環境光
-    material;           // マテリアル
-    cylinderGeometry;   // 円柱のジオメトリ
-    wingGeometry;       // 羽のジオメトリ
-    wingArray;          // 羽のメッシュの配列
-    upperNeckGroup;     // 首上のグループ
-    controls;           // オービットコントロール
-    axesHelper;         // アクシスヘルパー
-    isDown;             // キーの押下監視用フラグ
+    renderer; // レンダラー
+    scene; // シーン
+    camera; // カメラ
+    directionalLight; // 平行光源
+    ambientLight; // 環境光
+    material; // マテリアル
+    cylinderGeometry; // 円柱のジオメトリ
+    wingGeometry; // 羽のジオメトリ
+    wingArray; // 羽のメッシュの配列
+    wingGroup; // 羽のグループ
+    upperNeckGroup; // 首上のグループ
+    controls; // オービットコントロール
+    axesHelper; // アクシスヘルパー
+    isDown; // キーの押下監視用フラグ
 
     /**
      * コンストラクタ
@@ -92,8 +93,82 @@ class ThreeApp {
         this.camera.position.copy(ThreeApp.CAMERA_PARAM.position);
         this.camera.lookAt(ThreeApp.CAMERA_PARAM.lookAt);
 
+        // 平行光源
+        this.directionalLight = new THREE.DirectionalLight(
+            ThreeApp.DIREECTIONAL_LIGHT_PARAM.color,
+            ThreeApp.DIREECTIONAL_LIGHT_PARAM.intensity
+        );
+        this.directionalLight.position.copy(ThreeApp.DIREECTIONAL_LIGHT_PARAM.position);
+        this.scene.add(this.directionalLight);
+
+        // 環境光
+        this.ambientLight = new THREE.AmbientLight(
+            ThreeApp.AMBIENT_LIGHT_PARAM.color,
+            ThreeApp.AMBIENT_LIGHT_PARAM.intensity
+        );
+        this.scene.add(this.ambientLight);
+
+        // マテリアル
+        this.material = new THREE.MeshPhongMaterial(ThreeApp.MATERIAL_PARAM)
+
+        // グループ
+        this.wingGroup = new THREE.Group();
+        this.scene.add(this.wingGroup);
+        // this.upperNeckGroup = new THREE.Group();
+        // this.scene.add(this.upperNeckGroup);
+
+        // 羽
+        const wingCount = 8;
+        const deg = 360.0 / wingCount;
+        const red = (deg * Math.PI / 180.0);
+        let wingPositionX = 0;
+        let wingPositionY = 0;
+        let wingRotateZ = 0;
+        this.wingGeometry = new THREE.BoxGeometry(1, 4, 0.1);
+        this.wingArray = [];
+
+        for (let i = 0; i < wingCount; ++i) {
+            const wing = new THREE.Mesh(this.wingGeometry, this.material);
+            wing.position.x = wingPositionX;
+            wing.position.y = wingPositionY;
+            wing.rotation.z = wingRotateZ;
+
+            console.log(red)
+
+            // wingPositionX += red;
+            // wingPositionY += red;
+            wingRotateZ += (Math.PI / wingCount * 2);
+            // wingRotateZ += (1 / wingCount);
+
+            this.wingGroup.add(wing);
+            this.wingArray.push(wing);
+        }
+
+        // 軸ヘルパー
+        const axesBarLength = 5.0;
+        this.axesHelper = new THREE.AxesHelper(axesBarLength);
+        this.scene.add(this.axesHelper);
+
+        // コントロール
+        this.controls = new OrbitControls(this.camera, this.renderer.domElement);
+
         // this のバインド
         this.render = this.render.bind(this);
+        // キーの押下状態を保持するフラグ
+        this.isDown = false;
+
+        // キーの押下や離す操作を検出できるようにする
+        window.addEventListener('keydown', (keyEvent) => {
+            switch (keyEvent.key) {
+                case ' ': // スペースキーの場合
+                    this.isDown = true;
+                    break;
+                default:
+            }
+        }, false);
+        window.addEventListener('keyup', (keyEvent) => {
+            this.isDown = false;
+        }, false);
 
         // ウインドウのリサイズ検知
         window.addEventListener('resize', () => {
