@@ -18,7 +18,7 @@ class ThreeApp {
         aspect: window.innerWidth / window.innerHeight,
         near: 0.1,
         far: 30.0,
-        position: new THREE.Vector3(0.0, 3.0, 15.0),
+        position: new THREE.Vector3(0.0, 5.0, 20.0),
         lookAt: new THREE.Vector3(0.0, 0.0, 0.0),
     }
     /**
@@ -59,9 +59,12 @@ class ThreeApp {
     material; // マテリアル
     headGeometry; // 頭のジオメトリ
     bodyGeometry; // 胴体のジオメトリ
+    neckGeometry; // 胴体のジオメトリ
+    baseGeometry; // 胴体のジオメトリ
     wingGeometry; // 羽のジオメトリ
     wingArray; // 羽のメッシュの配列
     wingGroup; // 羽のグループ
+    wholeGroup; // 全体のグループ
     upperNeckGroup; // 首上のグループ
     controls; // オービットコントロール
     axesHelper; // アクシスヘルパー
@@ -115,8 +118,22 @@ class ThreeApp {
         // グループ
         this.wingGroup = new THREE.Group();
         this.upperNeckGroup = new THREE.Group();
+        this.wholeGroup = new THREE.Group();
         this.upperNeckGroup.add(this.wingGroup);
-        this.scene.add(this.upperNeckGroup);
+        this.wholeGroup.add(this.upperNeckGroup);
+        this.scene.add(this.wholeGroup);
+
+        // 首
+        this.neckGeometry = new THREE.CylinderGeometry(0.5, 0.5, 10, 80);
+        const neck = new THREE.Mesh(this.neckGeometry, this.material);
+        neck.position.y = -5;
+        this.wholeGroup.add(neck);
+
+        // 土台
+        this.baseGeometry = new THREE.CylinderGeometry(3.5, 3.5, 0.5, 80);
+        const base = new THREE.Mesh(this.baseGeometry, this.material);
+        base.position.y = -10;
+        this.wholeGroup.add(base);
 
         // 胴体
         const bodyLength = 3;
@@ -137,7 +154,7 @@ class ThreeApp {
 
         // 羽
         const wingCount = 8;
-        const wingLength = 4;
+        const wingLength = 3.5;
         let wingRotateZ = 0;
         this.wingGeometry = new THREE.BoxGeometry(wingLength, 1, 0.1);
         this.wingArray = [];
@@ -202,13 +219,12 @@ class ThreeApp {
         // オービットコントロール
         this.controls.update();
 
-        this.upperNeckGroup.rotation.y =
-            (Math.PI / 2)             // 90度
-            * Math.sin(
-                Date.now() * 0.001    // 1秒間で90度
-                 / 2                      // 2秒間で90度にする
-            );
-        this.wingGroup.rotation.z += 0.1;
+        // 位置調整
+        this.wholeGroup.position.y = 4;
+
+        // アニメーション
+        // this.upperNeckGroup.rotation.y = (Math.PI / 2) * Math.sin(Date.now() * 0.001);
+        // this.wingGroup.rotation.z += 0.1;
 
         // レンダラーで描画
         this.renderer.render(this.scene, this.camera);
