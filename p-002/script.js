@@ -197,12 +197,17 @@ class ThreeApp {
      */
     render() {
         // 恒常ループ
-        requestAnimationFrame(this.render);
+        requestAnimationFrame(this.render); // FPS毎に自身を呼び出す 60FPSなら1秒間に60回
 
         // オービットコントロール
         this.controls.update();
 
-        this.upperNeckGroup.rotation.y += 0.01;
+        this.upperNeckGroup.rotation.y =
+            (Math.PI / 2)             // 90度
+            * Math.sin(
+                Date.now() * 0.001    // 1秒間で90度
+                 / 2                      // 2秒間で90度にする
+            );
         this.wingGroup.rotation.z += 0.1;
 
         // レンダラーで描画
