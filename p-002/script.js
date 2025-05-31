@@ -17,15 +17,15 @@ class ThreeApp {
         fovy: 60,
         aspect: window.innerWidth / window.innerHeight,
         near: 0.1,
-        far: 20.0,
-        position: new THREE.Vector3(0.0, 2.0, 10.0),
+        far: 30.0,
+        position: new THREE.Vector3(0.0, 3.0, 15.0),
         lookAt: new THREE.Vector3(0.0, 0.0, 0.0),
     }
     /**
      * レンダラー定義のための定数
      */
     static RENDERER_PARAM = {
-        clearColor: 0x666666,
+        clearColor: 0x333333,
         width: window.innerWidth,
         height: window.innerHeight,
     }
@@ -48,7 +48,7 @@ class ThreeApp {
      * マテリアル定義のための定数
      */
     static MATERIAL_PARAM = {
-        color: 0x999999,
+        color: 0xcccccc,
     }
 
     renderer; // レンダラー
@@ -57,7 +57,8 @@ class ThreeApp {
     directionalLight; // 平行光源
     ambientLight; // 環境光
     material; // マテリアル
-    cylinderGeometry; // 円柱のジオメトリ
+    headGeometry; // 頭のジオメトリ
+    bodyGeometry; // 胴体のジオメトリ
     wingGeometry; // 羽のジオメトリ
     wingArray; // 羽のメッシュの配列
     wingGroup; // 羽のグループ
@@ -113,32 +114,44 @@ class ThreeApp {
 
         // グループ
         this.wingGroup = new THREE.Group();
-        this.scene.add(this.wingGroup);
-        // this.upperNeckGroup = new THREE.Group();
-        // this.scene.add(this.upperNeckGroup);
+        this.upperNeckGroup = new THREE.Group();
+        this.upperNeckGroup.add(this.wingGroup);
+        this.scene.add(this.upperNeckGroup);
+
+        // 胴体
+        const bodyLength = 3;
+        this.bodyGeometry = new THREE.CylinderGeometry(1.5, 1.5, bodyLength, 6);
+        const body = new THREE.Mesh(this.bodyGeometry, this.material);
+        body.rotation.y = Math.PI / 2; //90度回転
+        body.rotation.x = Math.PI / 2; //90度回転
+        this.upperNeckGroup.add(body);
+
+        // 頭
+        const headLength = 1;
+        this.headGeometry = new THREE.CylinderGeometry(1, 1, headLength, 120);
+        const head = new THREE.Mesh(this.headGeometry, this.material);
+        head.rotation.x = Math.PI / 2;
+        head.position.z = (bodyLength / 2) + headLength / 2;
+        this.wingGroup.add(head);
+
 
         // 羽
         const wingCount = 8;
-        const deg = 360.0 / wingCount;
-        const red = (deg * Math.PI / 180.0);
-        let wingPositionX = 0;
-        let wingPositionY = 0;
+        const wingLength = 4;
         let wingRotateZ = 0;
-        this.wingGeometry = new THREE.BoxGeometry(1, 4, 0.1);
+        this.wingGeometry = new THREE.BoxGeometry(wingLength, 1, 0.1);
         this.wingArray = [];
 
         for (let i = 0; i < wingCount; ++i) {
             const wing = new THREE.Mesh(this.wingGeometry, this.material);
-            wing.position.x = wingPositionX;
-            wing.position.y = wingPositionY;
+            const radian = i / wingCount * Math.PI * 2;
+            wing.position.x = (wingLength * 0.6) * Math.cos(radian);
+            wing.position.y = (wingLength * 0.6) * Math.sin(radian);
+            wing.position.z = (bodyLength / 2) + headLength / 2;
+            // wing.rotation.y = 0.2;
             wing.rotation.z = wingRotateZ;
 
-            console.log(red)
-
-            // wingPositionX += red;
-            // wingPositionY += red;
             wingRotateZ += (Math.PI / wingCount * 2);
-            // wingRotateZ += (1 / wingCount);
 
             this.wingGroup.add(wing);
             this.wingArray.push(wing);
@@ -186,8 +199,13 @@ class ThreeApp {
         // 恒常ループ
         requestAnimationFrame(this.render);
 
-        // this.controls.update();
+        // オービットコントロール
+        this.controls.update();
 
+        this.upperNeckGroup.rotation.y += 0.01;
+        this.wingGroup.rotation.z += 0.1;
+
+        // レンダラーで描画
         this.renderer.render(this.scene, this.camera);
     }
 }
