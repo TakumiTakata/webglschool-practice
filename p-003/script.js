@@ -13,21 +13,13 @@ window.addEventListener('DOMContentLoaded', async () => {
 
 class ThreeApp {
     /**
-     * 月にかけるスケール
-     */
-    static MOON_SCALE = 0.27;
-    /**
-     * 月と地球の距離
-     */
-    static MOON_DISTANCE = 3.0;
-    /**
      * 人工衛星の移動速度
      */
-    static SATELLITE_SPEED = 0.05;
+    static PLANE_SPEED = 0.05;
     /**
      * 人工衛星の屈曲速度
      */
-    static SATELLITE_TURN_SPEED = 0.1;
+    static PLANE_DISTANCE = 3.5;
 
     /**
      * カメラ定義のための定数
@@ -44,7 +36,7 @@ class ThreeApp {
      * レンダラー定義のための定数
      */
     static RENDERER_PARAM = {
-        clearColor: 0x333333,
+        clearColor: 0x111111,
         width: window.innerWidth,
         height: window.innerHeight,
     }
@@ -67,7 +59,7 @@ class ThreeApp {
      * マテリアル定義のための定数
      */
     static MATERIAL_PARAM = {
-        color: 0xcccccc,
+        color: 0xeeeeee,
     }
     /**
      * フォグ定時のための定数
@@ -89,11 +81,12 @@ class ThreeApp {
     isDown; // キーの押下監視用フラグ
 
     clock; // 時間管理用
-    sphereGeometry; // ジオメトリ
     earth; // 地球
+    earthGeometry; // 地球用ジオメトリ
     earthMaterial; // 地球用マテリアル
     earthTexture; // 地球用テクスチャ
     palne; // 飛行機
+    palneGeometry; // 飛行機用ジオメトリ
     palneMaterial; // 飛行機用マテリアル
     palneTexture; // 飛行機用テクスチャ
 
@@ -137,13 +130,14 @@ class ThreeApp {
      * アセットのロードを行うPromise
      */
     load() {
-        return new Promise((resolve) => {
+        return new Promise((resolve, reject) => {
             const earthPath = './earth.jpg';
             const loader = new THREE.TextureLoader();
             loader.load(earthPath, (earthTexture) => {
+                // 地球用
                 this.earthTexture = earthTexture;
                 resolve();
-            })
+            });
         })
     }
 
@@ -186,6 +180,24 @@ class ThreeApp {
         );
         this.scene.add(this.ambientLight);
 
+
+        // 地球のメッシュ作成
+        this.earthGeometry = new THREE.SphereGeometry(3, 32, 32);
+        this.earthMaterial = new THREE.MeshPhongMaterial(ThreeApp.MATERIAL_PARAM);
+        this.earthMaterial.map = this.earthTexture;
+        this.earth = new THREE.Mesh(this.earthGeometry, this.earthMaterial);
+        this.scene.add(this.earth);
+
+        // 飛行機のメッシュ作成
+        // this.planeGeometry = new THREE.ConeGeometry(0.2, 0.4, 32);
+        this.planeGeometry = new THREE.SphereGeometry(0.2, 32, 32);
+        this.planeMaterial = new THREE.MeshPhongMaterial(ThreeApp.MATERIAL_PARAM);
+        this.plane = new THREE.Mesh(this.planeGeometry, this.planeMaterial);
+        this.plane.position.y = ThreeApp.PLANE_DISTANCE;
+        this.plane.rotation.z = Math.PI / -2;
+        this.scene.add(this.plane);
+
+
         // 軸ヘルパー
         const axesBarLength = 5.0;
         this.axesHelper = new THREE.AxesHelper(axesBarLength);
@@ -212,6 +224,8 @@ class ThreeApp {
 
         // オービットコントロール
         this.controls.update();
+
+
 
         // レンダラーで描画
         this.renderer.render(this.scene, this.camera);
