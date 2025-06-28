@@ -15,9 +15,9 @@ class ThreeApp {
     /**
      * 人工衛星の移動速度
      */
-    static PLANE_SPEED = 0.05;
+    static PLANE_SPEED = 10;
     /**
-     * 人工衛星の屈曲速度
+     * 人工衛星の距離
      */
     static PLANE_DISTANCE = 3.5;
 
@@ -190,12 +190,16 @@ class ThreeApp {
 
         // 飛行機のメッシュ作成
         // this.planeGeometry = new THREE.ConeGeometry(0.2, 0.4, 32);
-        this.planeGeometry = new THREE.SphereGeometry(0.2, 32, 32);
+        const planeRadius = 0.2;
+        this.planeGeometry = new THREE.SphereGeometry(planeRadius, 32, 32);
         this.planeMaterial = new THREE.MeshPhongMaterial(ThreeApp.MATERIAL_PARAM);
         this.plane = new THREE.Mesh(this.planeGeometry, this.planeMaterial);
-        this.plane.position.y = ThreeApp.PLANE_DISTANCE;
-        this.plane.rotation.z = Math.PI / -2;
+        this.plane.position.y = ThreeApp.PLANE_DISTANCE - planeRadius;
+        // this.plane.rotation.z = Math.PI / -2;
         this.scene.add(this.plane);
+
+        // clockオブジェクトを生成
+        this.clock = new THREE.Clock();
 
 
         // 軸ヘルパー
@@ -225,6 +229,13 @@ class ThreeApp {
         // オービットコントロール
         this.controls.update();
 
+        const time = this.clock.getElapsedTime();
+
+        this.plane.position.set(
+            Math.cos(time) * ThreeApp.PLANE_DISTANCE,
+            Math.sin(time) * ThreeApp.PLANE_DISTANCE,
+            0.0
+        )
 
 
         // レンダラーで描画
