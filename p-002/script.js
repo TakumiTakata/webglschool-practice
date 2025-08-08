@@ -223,8 +223,8 @@ class ThreeApp {
         this.wholeGroup.position.y = 4;
 
         // アニメーション
-        // this.upperNeckGroup.rotation.y = (Math.PI / 2) * Math.sin(Date.now() * 0.001);
-        // this.wingGroup.rotation.z += 0.1;
+        this.upperNeckGroup.rotation.y = (Math.PI / 2) * Math.sin(Date.now() * 0.001);
+        this.wingGroup.rotation.z += 0.1;
 
         // レンダラーで描画
         this.renderer.render(this.scene, this.camera);
