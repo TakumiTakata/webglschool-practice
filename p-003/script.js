@@ -23,7 +23,7 @@ class ThreeApp {
     /**
      * 👀の距離
      */
-    static EYES_DISTANCE = 3.2;
+    static EYES_DISTANCE = 3.5;
 
     /**
      * カメラ定義のための定数
@@ -49,7 +49,7 @@ class ThreeApp {
      */
     static DIREECTIONAL_LIGHT_PARAM = {
         color: 0xffffff,
-        intensity: 1.0,
+        intensity: 3.0,
         position: new THREE.Vector3(1.0, 1.0, 1.0),
     }
     /**
@@ -97,6 +97,8 @@ class ThreeApp {
     eyeMaterial; // 片目用マテリアル
     eyesArray;
     eyesGroup; // 両目グループ
+    pointerVector;
+    pointerPosition;
 
 
 
@@ -126,6 +128,41 @@ class ThreeApp {
             this.isDown = false;
         }, false);
 
+
+        this.pointerPosition = new THREE.Vector3();
+
+        window.addEventListener('pointermove', (pointerEvent) => {
+            const pointerX = pointerEvent.clientX;
+            const pointerY = pointerEvent.clientY;
+
+            // 画面中央を起点にした -1.0 ~ 1.0 に変換
+            const scaleX = pointerX / window.innerWidth * 2.0 - 1.0;
+            const scaleY = pointerY / window.innerHeight * 2.0 - 1.0;
+
+            let positionZ = 1;
+
+            // 画面端に近いほどpositionZを0に近づける
+            const distanceFromCenter = Math.sqrt(scaleX * scaleX + scaleY * scaleY);
+            positionZ = Math.max(0, 1 - distanceFromCenter);
+
+            // ベクトルの定義
+            const pointerVector = new THREE.Vector3(
+                scaleX,
+                scaleY,
+                positionZ,
+            )
+            // ベクトルの単位化
+            pointerVector.normalize();
+
+            this.pointerPosition.set(
+                pointerVector.x * ThreeApp.EYES_DISTANCE,
+                pointerVector.y * ThreeApp.EYES_DISTANCE * -1,
+                pointerVector.z * ThreeApp.EYES_DISTANCE,
+            );
+
+        }, false);
+
+
         // ウインドウのリサイズ検知
         window.addEventListener('resize', () => {
             this.renderer.setSize(window.innerWidth, window.innerHeight);
@@ -145,6 +182,7 @@ class ThreeApp {
             loader.load(earthPath, (earthTexture) => {
                 // 地球用
                 this.earthTexture = earthTexture;
+                // earthTexture.colorSpace = THREE.SRGBColorSpace;
                 resolve();
             });
         })
@@ -203,7 +241,7 @@ class ThreeApp {
         this.planeGeometry = new THREE.SphereGeometry(planeRadius, 32, 32);
         this.planeMaterial = new THREE.MeshPhongMaterial(ThreeApp.MATERIAL_PARAM.planeColor);
         this.plane = new THREE.Mesh(this.planeGeometry, this.planeMaterial);
-        this.plane.position.y = ThreeApp.PLANE_DISTANCE - planeRadius;
+        // this.plane.position.y = ThreeApp.PLANE_DISTANCE - planeRadius;
         this.scene.add(this.plane);
 
         // 👀のメッシュ作成準備
@@ -239,40 +277,9 @@ class ThreeApp {
             this.eyesArray.push(eye);
         }
 
-        // this.eyesGroup.position.z = 3.1;
         this.scene.add(this.eyesGroup);
+        this.eyesGroup.position.set(0.0, 0.0, ThreeApp.EYES_DISTANCE);
 
-        window.addEventListener('pointermove', (pointerEvent) => {
-            const pointerX = pointerEvent.clientX;
-            const pointerY = pointerEvent.clientY;
-
-            // 画面中央を起点にした -1.0 ~ 1.0 に変換
-            const scaleX = pointerX / window.innerWidth * 2.0 - 1.0;
-            const scaleY = pointerY / window.innerHeight * 2.0 - 1.0;
-
-            let positionZ = 1;
-
-            // 画面端に近いほどpositionZを0に近づける
-            const distanceFromCenter = Math.sqrt(scaleX * scaleX + scaleY * scaleY);
-            positionZ = Math.max(0, 1 - distanceFromCenter);
-
-            // ベクトルの定義
-            const vector = new THREE.Vector3(
-                scaleX,
-                scaleY,
-                positionZ
-            )
-            // ベクトルの単位化
-            vector.normalize();
-
-            this.eyesGroup.position.set(
-                // scaleX * ThreeApp.EYES_DISTANCE,
-                // scaleY * ThreeApp.EYES_DISTANCE * -1,
-                vector.x * ThreeApp.EYES_DISTANCE,
-                vector.y * ThreeApp.EYES_DISTANCE * -1,
-                vector.z * ThreeApp.EYES_DISTANCE,
-            )
-        }, false);
 
 
 
@@ -318,6 +325,8 @@ class ThreeApp {
             0.0
         );
 
+        const subVector = new THREE.Vector3().subVectors(this.pointerPosition, this.eyesGroup.position);
+        this.eyesGroup.position.add(subVector.multiplyScalar(0.08));
 
         // レンダラーで描画
         this.renderer.render(this.scene, this.camera);
