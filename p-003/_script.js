@@ -23,7 +23,7 @@ class ThreeApp {
     /**
      * 👀の距離
      */
-    static EYES_DISTANCE = 3.2;
+    static EYES_DISTANCE = 3.5;
 
     /**
      * カメラ定義のための定数
@@ -33,7 +33,7 @@ class ThreeApp {
         aspect: window.innerWidth / window.innerHeight,
         near: 0.1,
         far: 30.0,
-        position: new THREE.Vector3(0.0, 0.0, 10.0),
+        position: new THREE.Vector3(0.0, 2.0, 10.0),
         lookAt: new THREE.Vector3(0.0, 0.0, 0.0),
     }
     /**
@@ -66,12 +66,6 @@ class ThreeApp {
         planeColor: 0xeeeeee,
         eyeColor: 0xffffff,
     }
-    static SPHERE_MATERIAL_PARAM = {
-        color: 0xffffff,
-        transparent: true, // 透明を扱うかどうか
-        opacity: 0.0, // 透明度
-        side: THREE.DoubleSide, // 描画する面（バックフェイスカリングの設定）
-    }
     /**
      * フォグ定時のための定数
      */
@@ -80,11 +74,6 @@ class ThreeApp {
         near: 10.0,
         far: 20.0,
     };
-
-    // 目の回転限度
-    static EYES_ROTATION_LIMIT_PERCENT = 0.65;
-    // 目の回転遅延補間係数
-    static EYES_ROTATION_LERP_FACTOR = 0.07;
 
     wrapper; // canvasの親要素
     renderer; // レンダラー
@@ -97,7 +86,6 @@ class ThreeApp {
     isDown; // キーの押下監視用フラグ
     clock; // 時間管理用
     earth; // 地球
-    earthWrapper; // 地球
     earthGeometry; // 地球用ジオメトリ
     earthMaterial; // 地球用マテリアル
     earthTexture; // 地球用テクスチャ
@@ -108,14 +96,9 @@ class ThreeApp {
     eyeGeometryPanel; // 片目用ジオメトリ
     eyeMaterial; // 片目用マテリアル
     eyesArray;
-    eyesSphere;
-    eyesSphereMaterial;
     eyesGroup; // 両目グループ
-    eyesWrapper; // 両目グループ
-    eyesVector;
     pointerVector;
-    subVector;
-    targetRotation; // 目標回転値
+    pointerPosition;
 
 
 
@@ -146,9 +129,7 @@ class ThreeApp {
         }, false);
 
 
-        this.pointerVector = new THREE.Vector2();
-        this.subVector = new THREE.Vector2();
-        this.targetRotation = new THREE.Vector2();
+        this.pointerPosition = new THREE.Vector3();
 
         window.addEventListener('pointermove', (pointerEvent) => {
             const pointerX = pointerEvent.clientX;
@@ -158,12 +139,26 @@ class ThreeApp {
             const scaleX = pointerX / window.innerWidth * 2.0 - 1.0;
             const scaleY = pointerY / window.innerHeight * 2.0 - 1.0;
 
-            this.pointerVector.set(
-                scaleX,
-                scaleY
-            )
+            let positionZ = 1;
 
-            this.subVector.subVectors(this.pointerVector, this.eyesVector);
+            // 画面端に近いほどpositionZを0に近づける
+            const distanceFromCenter = Math.sqrt(scaleX * scaleX + scaleY * scaleY);
+            positionZ = Math.max(0, 1 - distanceFromCenter);
+
+            // ベクトルの定義
+            const pointerVector = new THREE.Vector3(
+                scaleX,
+                scaleY,
+                positionZ,
+            )
+            // ベクトルの単位化
+            pointerVector.normalize();
+
+            this.pointerPosition.set(
+                pointerVector.x * ThreeApp.EYES_DISTANCE,
+                pointerVector.y * ThreeApp.EYES_DISTANCE * -1,
+                pointerVector.z * ThreeApp.EYES_DISTANCE,
+            );
 
         }, false);
 
@@ -234,14 +229,11 @@ class ThreeApp {
 
 
         // 地球のメッシュ作成
-        this.earthGeometry = new THREE.SphereGeometry(2.6, 32, 32);
+        this.earthGeometry = new THREE.SphereGeometry(3, 32, 32);
         this.earthMaterial = new THREE.MeshPhongMaterial(ThreeApp.MATERIAL_PARAM.planeColor);
         this.earthMaterial.map = this.earthTexture;
         this.earth = new THREE.Mesh(this.earthGeometry, this.earthMaterial);
-        this.earthWrapper = new THREE.Group();
-        this.earthWrapper.add(this.earth);
-        this.scene.add(this.earthWrapper);
-        this.earthWrapper.rotation.z = (360 / -23.4) * (Math.PI / 180);
+        this.scene.add(this.earth);
 
         // 飛行機のメッシュ作成
         // this.planeGeometry = new THREE.ConeGeometry(0.2, 0.4, 32);
@@ -257,12 +249,7 @@ class ThreeApp {
         this.eyeGeometryPanel = new THREE.PlaneGeometry(0.2, 0.3);
         this.eyeMaterial = new THREE.MeshBasicMaterial(ThreeApp.MATERIAL_PARAM.eyeColor);
 
-        this.eyesSphereMaterial = new THREE.MeshPhongMaterial(ThreeApp.SPHERE_MATERIAL_PARAM);
-        this.eyesSphere = new THREE.Mesh(this.earthGeometry, this.eyesSphereMaterial);
-
         this.eyesGroup = new THREE.Group();
-        this.eyesWrapper = new THREE.Group();
-        this.eyesWrapper.add(this.eyesSphere);
         this.eyesArray = [];
 
         // 👀のメッシュ作成
@@ -290,15 +277,10 @@ class ThreeApp {
             this.eyesArray.push(eye);
         }
 
+        this.scene.add(this.eyesGroup);
         this.eyesGroup.position.set(0.0, 0.0, ThreeApp.EYES_DISTANCE);
-        this.eyesWrapper.add(this.eyesGroup);
-        this.scene.add(this.eyesWrapper);
 
-        // 👀の回転初期値を設定
-        this.eyesVector = new THREE.Vector2(
-            this.eyesWrapper.rotation.x,
-            this.eyesWrapper.rotation.y
-        );
+
 
 
 
@@ -343,27 +325,8 @@ class ThreeApp {
             0.0
         );
 
-        this.earth.rotation.y += 0.006;
-
-
-        // 目標回転値を計算
-        this.targetRotation.set(
-            this.subVector.x * ThreeApp.EYES_ROTATION_LIMIT_PERCENT,
-            this.subVector.y * ThreeApp.EYES_ROTATION_LIMIT_PERCENT
-        );
-
-        // 現在の回転値から目標回転値へ線形補間で遅延更新
-        this.eyesWrapper.rotation.y = THREE.MathUtils.lerp(
-            this.eyesWrapper.rotation.y,
-            this.targetRotation.x,
-            ThreeApp.EYES_ROTATION_LERP_FACTOR
-        );
-        this.eyesWrapper.rotation.x = THREE.MathUtils.lerp(
-            this.eyesWrapper.rotation.x,
-            this.targetRotation.y,
-            ThreeApp.EYES_ROTATION_LERP_FACTOR
-        );
-
+        const subVector = new THREE.Vector3().subVectors(this.pointerPosition, this.eyesGroup.position);
+        this.eyesGroup.position.add(subVector.multiplyScalar(0.08));
 
         // レンダラーで描画
         this.renderer.render(this.scene, this.camera);
