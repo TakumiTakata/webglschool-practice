@@ -33,6 +33,7 @@ class App {
     attributeStride; // attribute 変数のストライド
     uniformLocation; // uniform 変数のロケーション
     planeGeometry; // 板ポリゴンのジオメトリ情報
+    planeHeight; // 板ポリゴンの高さ
     planeVBO; // 板ポリゴンの頂点バッファ
     planeIBO; // 板ポリゴンのインデックスバッファ
     startTime; // レンダリング開始時のタイムスタンプ
@@ -100,6 +101,7 @@ class App {
     resize() {
         this.canvas.width = window.innerWidth;
         this.canvas.height = window.innerHeight;
+        this.planeHeight = this.canvas.height * (4.5 /this.canvas.height);
     }
 
     /**
@@ -165,10 +167,10 @@ class App {
      */
     setupGeometry() {
         // プレーンジオメトリの情報を取得
-        const size = 9;
-        const ratio = 2048 / 4096;
+        const height = 4.5;
+        const ratio = 4096 / 2048; // image width / height
         const color = [1.0, 1.0, 1.0, 1.0];
-        this.planeGeometry = WebGLGeometry.plane(size, size * ratio, color);
+        this.planeGeometry = WebGLGeometry.plane(this.planeHeight * ratio, this.planeHeight, color);
 
         // VBO と IBO を生成する
         this.planeVBO = [
