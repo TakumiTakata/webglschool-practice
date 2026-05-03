@@ -2,10 +2,14 @@ attribute vec3 position;
 attribute vec3 normal;
 attribute vec4 color;
 attribute vec2 texCoord;
+
 uniform mat4 mvpMatrix;
 uniform mat4 normalMatrix;
+uniform float uTime;
+
 varying vec4 vColor;
 varying vec2 vTexCoord;
+varying float vTime;
 
 // ライトベクトルはひとまず定数で定義する
 const vec3 light = vec3(1.0, 1.0, 1.0);
@@ -24,6 +28,9 @@ void main() {
 
     // テクスチャ座標をフラグメントシェーダーに送る
     vTexCoord = texCoord;
+
+    // 経過時間をそのままフラグメントシェーダーに送る
+    vTime = uTime;
 
     gl_Position = mvpMatrix * vec4(position, 1.0);
 }

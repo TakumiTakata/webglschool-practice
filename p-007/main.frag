@@ -5,6 +5,7 @@ uniform sampler2D textureUnit02;
 
 varying vec4 vColor;
 varying vec2 vTexCoord;
+varying float vTime;
 
 
 void main() {
@@ -14,7 +15,7 @@ void main() {
 
     vec4 color0 = texture2D(textureUnit01, vTexCoord);
     vec4 color1 = texture2D(textureUnit02, vTexCoord);
-    gl_FragColor = color0 * color1;
+    gl_FragColor = mix(color0, color1, vTime);
     // gl_FragColor = color0;
 
 }

@@ -42,11 +42,14 @@ class App {
     textureNoKoi; // テクスチャのインスタンス @@@
     textureKoi; // テクスチャのインスタンス @@@
     textureVisibility; // テクスチャの可視性 @@@
+    isAnimation; // アニメーション状態監視フラグ
+    animationTime;
 
     constructor() {
         // this を固定するためのバインド処理
         this.resize = this.resize.bind(this);
         this.render = this.render.bind(this);
+        this.click = this.click.bind(this);
     }
 
     /**
@@ -72,11 +75,25 @@ class App {
         // リサイズイベントの設定
         window.addEventListener('resize', this.resize, false);
 
+        // クリックイベントの設定
+        this.isAnimation = false;
+        window.addEventListener('click', this.click, false);
+
         // 深度テストは初期状態で有効
         this.gl.enable(this.gl.DEPTH_TEST);
 
         // 初期状態ではテクスチャが見えているようにする @@@
         this.textureVisibility = true;
+    }
+
+    click() {
+        if (this.isAnimation) { return; };
+
+        // アニメーション開始フラグを立てる
+        this.isAnimation = true;
+
+        // アニメーション開始時間を取得
+        this.animationTime = Date.now();
     }
 
     /**
@@ -101,7 +118,6 @@ class App {
     resize() {
         this.canvas.width = window.innerWidth;
         this.canvas.height = window.innerHeight;
-        this.planeHeight = this.canvas.height * (4.5 /this.canvas.height);
     }
 
     /**
@@ -167,10 +183,10 @@ class App {
      */
     setupGeometry() {
         // プレーンジオメトリの情報を取得
-        const height = 4.5;
-        const ratio = 4096 / 2048; // image width / height
+        const width = 5;
+        const ratio = 2048 / 4096;
         const color = [1.0, 1.0, 1.0, 1.0];
-        this.planeGeometry = WebGLGeometry.plane(this.planeHeight * ratio, this.planeHeight, color);
+        this.planeGeometry = WebGLGeometry.plane(width, width * ratio, color);
 
         // VBO と IBO を生成する
         this.planeVBO = [
@@ -207,6 +223,7 @@ class App {
             normalMatrix: gl.getUniformLocation(this.program, 'normalMatrix'),
             textureUnit01: gl.getUniformLocation(this.program, 'textureUnit01'), // uniform 変数のロケーション @@@
             textureUnit02: gl.getUniformLocation(this.program, 'textureUnit02'), // uniform 変数のロケーション @@@
+            uTime: gl.getUniformLocation(this.program, 'uTime'),
         };
     }
 
@@ -232,6 +249,8 @@ class App {
         this.startTime = Date.now();
         // レンダリングを行っているフラグを立てておく
         this.isRendering = true;
+        // アニメーション開始のフラグ
+        this.isAnimation = false;
         // レンダリングの開始
         this.render();
     }
@@ -290,6 +309,17 @@ class App {
         gl.uniformMatrix4fv(this.uniformLocation.normalMatrix, false, normalMatrix);
         gl.uniform1i(this.uniformLocation.textureUnit01, 0); // テクスチャユニットの番号を送る @@@
         gl.uniform1i(this.uniformLocation.textureUnit02, 1); // テクスチャユニットの番号を送る @@@
+
+        if (this.isAnimation) {
+            const duration = 1; // アニメーション秒数
+            let time = ((Date.now() - this.animationTime)) * 0.001;
+            gl.uniform1f(this.uniformLocation.uTime, time / duration);
+
+            if (time > duration) {
+                this.isAnimation = false;
+                this.animationTime = 0;
+            }
+        }
 
         // VBO と IBO を設定し、描画する
         WebGLUtility.enableBuffer(gl, this.planeVBO, this.attributeLocation, this.attributeStride, this.planeIBO);
