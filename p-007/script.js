@@ -10,12 +10,14 @@ import {
 import {
     WebGLOrbitCamera
 } from '../lib/camera.js';
-// import { Pane } from '../lib/tweakpane-4.0.3.min.js';
+// import {
+//     Pane
+// } from '../lib/tweakpane-4.0.3.min.js';
 
 window.addEventListener('DOMContentLoaded', async () => {
     const app = new App();
     app.init();
-    //   app.setupPane(); // tweakpane の初期化をメソッド化 @@@
+    // app.setupPane(); // tweakpane の初期化をメソッド化 @@@
     await app.load();
     app.setupGeometry();
     app.setupLocation();
@@ -41,9 +43,11 @@ class App {
     isRendering; // レンダリングを行うかどうかのフラグ
     textureNoKoi; // テクスチャのインスタンス @@@
     textureKoi; // テクスチャのインスタンス @@@
+    textureMap;
     textureVisibility; // テクスチャの可視性 @@@
     isAnimation; // アニメーション状態監視フラグ
     animationTime;
+    offset;
 
     constructor() {
         // this を固定するためのバインド処理
@@ -84,10 +88,14 @@ class App {
 
         // 初期状態ではテクスチャが見えているようにする @@@
         this.textureVisibility = true;
+
+        this.offset = 0.0;
     }
 
     click() {
-        if (this.isAnimation) { return; };
+        if (this.isAnimation) {
+            return;
+        };
 
         // アニメーション開始フラグを立てる
         this.isAnimation = true;
@@ -103,12 +111,16 @@ class App {
         // Tweakpane を使った GUI の設定
         const pane = new Pane();
         const parameter = {
-            texture: this.textureVisibility,
+            // texture: this.textureVisibility,
+            offset: this.offset,
         };
         // テクスチャの表示・非表示 @@@
-        pane.addBinding(parameter, 'texture')
+        pane.addBinding(parameter, 'offset', {
+                min: 0.0,
+                max: 1.0,
+            })
             .on('change', (v) => {
-                this.textureVisibility = v.value;
+                this.offset = v.value;
             });
     }
 
@@ -142,6 +154,7 @@ class App {
                 // 画像を読み込み、テクスチャを初期化する @@@
                 const imageNoKoi = await WebGLUtility.loadImage('./no-koi.jpg');
                 const imageKoi = await WebGLUtility.loadImage('./koi.jpg');
+                const imageMap = await WebGLUtility.loadImage('./map2.jpg');
 
                 // テクスチャオブジェクトを生成
                 const textureNoKoi = gl.createTexture();
@@ -158,6 +171,14 @@ class App {
                 gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, imageKoi);
                 this.textureSetting();
                 this.textureKoi = textureKoi;
+
+                // テクスチャオブジェクトを生成
+                const textureMap = gl.createTexture();
+                gl.activeTexture(gl.TEXTURE1);
+                gl.bindTexture(gl.TEXTURE_2D, textureMap);
+                gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, imageMap);
+                this.textureSetting();
+                this.textureMap = textureMap;
 
                 // Promsie を解決
                 resolve();
@@ -223,7 +244,9 @@ class App {
             normalMatrix: gl.getUniformLocation(this.program, 'normalMatrix'),
             textureUnit01: gl.getUniformLocation(this.program, 'textureUnit01'), // uniform 変数のロケーション @@@
             textureUnit02: gl.getUniformLocation(this.program, 'textureUnit02'), // uniform 変数のロケーション @@@
+            textureUnit03: gl.getUniformLocation(this.program, 'textureUnit03'), // uniform 変数のロケーション @@@
             uTime: gl.getUniformLocation(this.program, 'uTime'),
+            uOffset: gl.getUniformLocation(this.program, 'uOffset'),
         };
     }
 
@@ -302,6 +325,10 @@ class App {
         gl.bindTexture(gl.TEXTURE_2D, this.textureNoKoi);
         gl.activeTexture(gl.TEXTURE1);
         gl.bindTexture(gl.TEXTURE_2D, this.textureKoi);
+        gl.activeTexture(gl.TEXTURE2);
+        gl.bindTexture(gl.TEXTURE_2D, this.textureKoi);
+        gl.activeTexture(gl.TEXTURE3);
+        gl.bindTexture(gl.TEXTURE_2D, this.textureMap);
 
         // プログラムオブジェクトを選択し uniform 変数を更新する
         gl.useProgram(this.program);
@@ -309,9 +336,10 @@ class App {
         gl.uniformMatrix4fv(this.uniformLocation.normalMatrix, false, normalMatrix);
         gl.uniform1i(this.uniformLocation.textureUnit01, 0); // テクスチャユニットの番号を送る @@@
         gl.uniform1i(this.uniformLocation.textureUnit02, 1); // テクスチャユニットの番号を送る @@@
+        gl.uniform1f(this.uniformLocation.uOffset, this.offset);
 
         if (this.isAnimation) {
-            const duration = 1; // アニメーション秒数
+            const duration = 1.0; // アニメーション秒数
             let time = ((Date.now() - this.animationTime)) * 0.001;
             gl.uniform1f(this.uniformLocation.uTime, time / duration);
 

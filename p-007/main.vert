@@ -6,10 +6,12 @@ attribute vec2 texCoord;
 uniform mat4 mvpMatrix;
 uniform mat4 normalMatrix;
 uniform float uTime;
+uniform float uOffset;
 
 varying vec4 vColor;
 varying vec2 vTexCoord;
 varying float vTime;
+varying float vOffset;
 
 // ライトベクトルはひとまず定数で定義する
 const vec3 light = vec3(1.0, 1.0, 1.0);
@@ -32,5 +34,7 @@ void main() {
     // 経過時間をそのままフラグメントシェーダーに送る
     vTime = uTime;
 
+    vOffset = uOffset;
+    
     gl_Position = mvpMatrix * vec4(position, 1.0);
 }
