@@ -1,0 +1,106 @@
+* {
+  margin: 0px;
+  padding: 0px;
+}
+
+html,
+body {
+  font-family: "Noto Serif JP", serif;
+  font-weight: 400;
+  line-height: 1.8;
+}
+
+canvas {
+  margin: 0px auto;
+  cursor: pointer;
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+}
+
+.container {
+  position: relative;
+  z-index: 1;
+  color: #fff;
+  mix-blend-mode: difference;
+}
+
+.title {
+  height: 100vh;
+  min-height: 640px;
+  margin-bottom: 80vh;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+  font-family: "yu-mincho-pr6n", serif;
+  line-height: 1;
+}
+
+
+.title_ja {
+  margin-top: 20vh;
+  font-size: 160px;
+  font-weight: 400;
+}
+
+.title_en {
+  margin-top: 40px;
+  font-size: 40px;
+}
+
+.title_bar {
+  display: block;
+  margin-top: auto;
+  width: 1px;
+  height: 100px;
+  background-color: #878787;
+  position: relative;
+}
+
+.title_bar::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 0%;
+  background-color: #fff;
+  z-index: 1;
+  animation: barDown 1.7s cubic-bezier(0.42, 0.73, 0.69, 0.91) infinite;
+}
+
+@keyframes barDown {
+  0% {
+    height: 0%;
+    opacity: 1;
+  }
+
+  70% {
+    height: 100%;
+    opacity: 0.6;
+  }
+
+  100% {
+    height: 100%;
+    opacity: 0;
+  }
+}
+
+.contents {
+  padding-bottom: 200px;
+  font-size: 17px;
+  line-height: 2.6;
+  letter-spacing: 0.1em;
+  text-align: center;
+}
+
+.contents_text+.contents_text {
+  margin-top: 4em;
+}
+
+.contents_outro {
+  margin-top: 200px;
+  font-size: 13px;
+}

@@ -22,6 +22,33 @@ window.addEventListener('DOMContentLoaded', async () => {
     app.setupGeometry();
     app.setupLocation();
     app.start();
+
+    // ---------------------------------
+    // 要素出現時にクラス付与 + WebGL転換開始（最初の1回だけ）
+    // ---------------------------------
+    let contentsTransitionDone = false;
+
+    const contentsObserverCallback = (entries) => {
+        if (contentsTransitionDone) return;
+
+        for (const entry of entries) {
+            if (!entry.isIntersecting) continue;
+
+            contentsTransitionDone = true;
+            entry.target.classList.add('in-contents');
+            app.onContentsIntersect();
+            contentsObserver.disconnect();
+            return;
+        }
+    };
+
+    const contentsObserver = new IntersectionObserver(contentsObserverCallback, {
+        rootMargin: '-10% 0px',
+    });
+
+    document.querySelectorAll('.js-contents').forEach((target) => {
+        contentsObserver.observe(target);
+    });
 }, false);
 
 /**
@@ -53,7 +80,7 @@ class App {
         // this を固定するためのバインド処理
         this.resize = this.resize.bind(this);
         this.render = this.render.bind(this);
-        this.click = this.click.bind(this);
+        this.onContentsIntersect = this.onContentsIntersect.bind(this);
     }
 
     /**
@@ -66,7 +93,7 @@ class App {
 
         // カメラ制御用インスタンスを生成する
         const cameraOption = {
-            distance: 5.0, // Z 軸上の初期位置までの距離
+            distance: 3.0, // Z 軸上の初期位置までの距離
             min: 1.0, // カメラが寄れる最小距離
             max: 10.0, // カメラが離れられる最大距離
             move: 2.0, // 右ボタンで平行移動する際の速度係数
@@ -79,9 +106,7 @@ class App {
         // リサイズイベントの設定
         window.addEventListener('resize', this.resize, false);
 
-        // クリックイベントの設定
         this.isAnimation = false;
-        window.addEventListener('click', this.click, false);
 
         // 深度テストは初期状態で有効
         this.gl.enable(this.gl.DEPTH_TEST);
@@ -92,15 +117,13 @@ class App {
         this.offset = 0.0;
     }
 
-    click() {
+    /** .js-contents がビューポートと交差したときに転換アニメを開始する */
+    onContentsIntersect() {
         if (this.isAnimation) {
             return;
-        };
+        }
 
-        // アニメーション開始フラグを立てる
         this.isAnimation = true;
-
-        // アニメーション開始時間を取得
         this.animationTime = Date.now();
     }
 
@@ -258,7 +281,7 @@ class App {
         // ビューポートを設定する
         gl.viewport(0, 0, this.canvas.width, this.canvas.height);
         // クリアする色と深度を設定する
-        gl.clearColor(0.3, 0.3, 0.3, 1.0);
+        gl.clearColor(0.066, 0.070, 0.078, 1.0);
         gl.clearDepth(1.0);
         // 色と深度をクリアする
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
@@ -283,6 +306,13 @@ class App {
      */
     stop() {
         this.isRendering = false;
+    }
+
+    /**
+     * イージング
+     */
+    easeOutQuad(x) {
+        return 1 - (1 - x) * (1 - x);
     }
 
     /**
@@ -340,12 +370,15 @@ class App {
 
         if (this.isAnimation) {
             const duration = 1.0; // アニメーション秒数
-            let time = ((Date.now() - this.animationTime)) * 0.001;
-            gl.uniform1f(this.uniformLocation.uTime, time / duration);
+            const elapsedSec = (Date.now() - this.animationTime) * 0.001;
+            const linearT = Math.min(1, elapsedSec / duration); // 0〜1
+            const easedT = this.easeOutQuad(linearT); // 線形 → ease-out
+            gl.uniform1f(this.uniformLocation.uTime, easedT);
 
-            if (time > duration) {
-                this.isAnimation = false;
-                this.animationTime = 0;
+            if (elapsedSec > duration) {
+                this.isAnimation = false; // フラグ回収
+                this.animationTime = 0; // アニメーション開始時間をリセット
+                gl.uniform1f(this.uniformLocation.uTime, 1.0); // 終端を固定
             }
         }
 

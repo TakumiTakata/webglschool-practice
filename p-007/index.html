@@ -1,27 +1,71 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <meta name="robots" content="noindex, nofollow">
-    <meta charset="UTF-8">
-    <style>
-      * {
-        margin: 0px;
-        padding: 0px;
-      }
-      html, body {
-        text-align: center;
-        width: 100%;
-        height: 100%;
-        overflow: hidden;
-      }
-      canvas {
-        margin: 0px auto;
-        cursor: pointer;
-      }
-    </style>
-    <script src="./script.js" type="module"></script>
-  </head>
-  <body>
-    <canvas id="webgl-canvas"></canvas>
-  </body>
+
+<head>
+  <meta name="robots" content="noindex, nofollow">
+  <meta charset="UTF-8">
+  <title>鯉 - Koi</title>
+
+  <script>
+    (function(d) {
+      var config = {
+        kitId: 'ezn1rhn',
+        scriptTimeout: 3000,
+        async: true
+      },
+      h=d.documentElement,t=setTimeout(function(){h.className=h.className.replace(/\bwf-loading\b/g,"")+" wf-inactive";},config.scriptTimeout),tk=d.createElement("script"),f=false,s=d.getElementsByTagName("script")[0],a;h.className+=" wf-loading";tk.src='https://use.typekit.net/'+config.kitId+'.js';tk.async=true;tk.onload=tk.onreadystatechange=function(){a=this.readyState;if(f||a&&a!="complete"&&a!="loaded")return;f=true;clearTimeout(t);try{Typekit.load(config)}catch(e){}};s.parentNode.insertBefore(tk,s)
+    })(document);
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@200..900&display=swap" rel="stylesheet">
+
+
+
+  <link rel="stylesheet" href="./style.css">
+  <script src="./script.js" type="module"></script>
+</head>
+
+<body>
+  <canvas id="webgl-canvas"></canvas>
+
+  <div class="container">
+    <hgroup class="title">
+      <h1 class="title_ja">鯉</h1>
+      <p class="title_en">Koi</p>
+      <span class="title_bar"></span>
+    </hgroup>
+
+    <div class="contents js-contents">
+      <p class="contents_text">
+        鯉は、古くから日本人に親しまれてきた淡水魚で、<br>
+        その力強い生命力と美しい姿から、<br>
+        縁起の良い魚として知られています。<br>
+        川や池などさまざまな環境で生きることができ、<br>
+        観賞魚としても人気が高く、<br>
+        色鮮やかな「錦鯉」は海外でも高く評価されています。
+      </p>
+      <p class="contents_text">
+        また、鯉は「逆境を乗り越える象徴」とされることでも有名です。<br>
+        中国の伝説に由来する「登竜門」の話では、<br>
+        激しい滝を登り切った鯉が龍になったとされ、<br>
+        努力や成功の象徴として語り継がれています。
+      </p>
+      <p class="contents_text">
+        鯉は非常に長寿な魚で、<br>
+        平均的な寿命は20～40年、<br>
+        長くて50～80年生きることも珍しくありません。<br>
+        稀に100年を超える長寿な個体も報告されており、<br>
+        特に「花子」という鯉は<br>
+        226歳まで生きたという記録で知られています
+      </p>
+      <p class="contents_outro">
+        ウロコの輪紋（木の年輪みたいな輪）の数で年齢が分かるらしいよ。
+      </p>
+    </div>
+  </div>
+
+
+</body>
+
 </html>

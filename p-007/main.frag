@@ -9,7 +9,7 @@ varying vec2 vTexCoord;
 varying float vTime;
 varying float vOffset;
 
-const float displacementCoef = 0.2;
+const float displacementCoef = 0.5;
 
 
 void main() {
@@ -23,7 +23,7 @@ void main() {
     // 歪み用テクスチャ
     vec4 displacemantTexture = texture2D(textureUnit03, vTexCoord);
 
-    
+
     float displaceForce1 = displacemantTexture.r * vTime * displacementCoef;
     vec2 uvDisplaced1 = vec2(vTexCoord.x + displaceForce1, vTexCoord.y + displaceForce1);
     vec4 displacedTexture1 = texture2D(textureUnit01, uvDisplaced1);
